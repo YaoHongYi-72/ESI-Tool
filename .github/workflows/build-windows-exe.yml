@@ -1,0 +1,57 @@
+name: Build Windows EXE
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+      - master
+    tags:
+      - "v*"
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install -r windows_tool/requirements-windows.txt
+
+      - name: Build executable
+        run: python -m PyInstaller --noconfirm windows_tool/esi_tool.spec
+
+      - name: Prepare release package
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+          $packageDir = "release/ESI统计工具"
+          New-Item -ItemType Directory -Force -Path $packageDir | Out-Null
+          Copy-Item -Recurse -Force "dist/ESI统计工具/*" $packageDir
+          Copy-Item -Force README.md "release/README.md"
+          Compress-Archive -Path $packageDir -DestinationPath "release/ESI统计工具-windows.zip" -Force
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ESI统计工具-windows
+          path: release/ESI统计工具-windows.zip
+
+      - name: Upload release asset
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/ESI统计工具-windows.zip
