@@ -1,6 +1,6 @@
 Unicode True
 Name "ESI统计工具"
-OutFile "release\ESI-Tool-Setup.exe"
+OutFile "..\release\ESI-Tool-Setup.exe"
 InstallDir "$LOCALAPPDATA\Programs\ESI统计工具"
 RequestExecutionLevel user
 ShowInstDetails show
@@ -11,8 +11,8 @@ SetCompressor /SOLID lzma
 Section "Install"
   SetShellVarContext current
   SetOutPath "$INSTDIR"
-  File /oname=ESI-Tool.exe "dist\ESI统计工具.exe"
-  File "README.md"
+  File /oname=ESI-Tool.exe "..\dist\ESI统计工具.exe"
+  File "..\README.md"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 
   CreateShortcut "$DESKTOP\ESI统计工具.lnk" "$INSTDIR\ESI-Tool.exe"
