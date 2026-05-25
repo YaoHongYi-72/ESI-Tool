@@ -26,7 +26,8 @@ windows_tool/
   esi_pipeline.py
   build_windows_exe.bat
   build_windows_installer.bat
-  esi_installer.iss
+  install.cmd
+  sfx_config.txt
   run_esi_tool.bat
   esi_tool.spec
   requirements-windows.txt
@@ -61,7 +62,7 @@ windows_tool/
 
 ### 打包安装版
 
-先安装 `Inno Setup 6`，然后双击：
+先安装 `7-Zip`，然后双击：
 
 ```text
 windows_tool/build_windows_installer.bat

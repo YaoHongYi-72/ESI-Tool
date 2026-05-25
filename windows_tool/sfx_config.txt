@@ -1,0 +1,5 @@
+;!@Install@!UTF-8!
+Title="ESI统计工具 安装包"
+BeginPrompt="即将把 ESI统计工具 安装到当前用户目录，是否继续？"
+RunProgram="install.cmd"
+;!@InstallEnd@!

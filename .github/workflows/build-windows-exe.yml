@@ -73,22 +73,49 @@ jobs:
           Copy-Item -Force README.md "$portableDir/README.md"
           Compress-Archive -Path "$portableDir/*" -DestinationPath "release/ESI统计工具-portable.zip" -Force
 
-      - name: Install Inno Setup
+      - name: Install 7-Zip
         shell: pwsh
-        run: choco install innosetup --no-progress -y
+        run: choco install 7zip --no-progress -y
 
       - name: Build installer package
         shell: pwsh
         run: |
-          $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
-          if (!(Test-Path $iscc)) {
-            $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          $sevenZipDir = Join-Path $env:ProgramFiles '7-Zip'
+          if (!(Test-Path $sevenZipDir)) {
+            $sevenZipDir = Join-Path ${env:ProgramFiles(x86)} '7-Zip'
           }
-          Push-Location windows_tool
+          $sevenZipExe = Join-Path $sevenZipDir '7z.exe'
+          $sfxModule = Join-Path $sevenZipDir '7zS.sfx'
+          if (!(Test-Path $sevenZipExe)) {
+            throw "7z.exe not found"
+          }
+          if (!(Test-Path $sfxModule)) {
+            throw "7zS.sfx not found"
+          }
+
+          $payloadDir = "release/installer_payload"
+          New-Item -ItemType Directory -Force -Path $payloadDir | Out-Null
+          Copy-Item -Force "dist/ESI统计工具.exe" "$payloadDir/ESI统计工具.exe"
+          Copy-Item -Force "README.md" "$payloadDir/README.md"
+          Copy-Item -Force "windows_tool/install.cmd" "$payloadDir/install.cmd"
+
+          & $sevenZipExe a -t7z "release/installer_payload.7z" "$payloadDir\*" | Out-Null
+
+          $sfxConfig = Get-Content "windows_tool/sfx_config.txt" -Raw -Encoding utf8
+          [System.IO.File]::WriteAllText("release/sfx_config.txt", $sfxConfig, [System.Text.UTF8Encoding]::new($true))
+
+          $sfxBytes = [System.IO.File]::ReadAllBytes($sfxModule)
+          $configBytes = [System.IO.File]::ReadAllBytes("release/sfx_config.txt")
+          $archiveBytes = [System.IO.File]::ReadAllBytes("release/installer_payload.7z")
+          $outPath = "release/ESI统计工具-Setup.exe"
+
+          $stream = [System.IO.File]::Create($outPath)
           try {
-            & $iscc "esi_installer.iss"
+            $stream.Write($sfxBytes, 0, $sfxBytes.Length)
+            $stream.Write($configBytes, 0, $configBytes.Length)
+            $stream.Write($archiveBytes, 0, $archiveBytes.Length)
           } finally {
-            Pop-Location
+            $stream.Dispose()
           }
 
       - name: Upload installer artifact
