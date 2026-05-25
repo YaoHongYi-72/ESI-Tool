@@ -10,7 +10,7 @@ from analyze_2025_esi import run_analysis
 from generate_2025_esi_doc import generate_report_doc
 from generate_2025_esi_process_doc import generate_process_doc
 from generate_author_flow_doc import generate_author_flow_doc
-from generate_esi_stats_workbook import generate_stats_workbook
+from generate_esi_stats_workbook import generate_detailed_workbook, generate_stats_workbook
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -68,6 +68,7 @@ def run_pipeline(settings: PipelineSettings, log: Callable[[str], None]) -> dict
     outputs_dir.mkdir(parents=True, exist_ok=True)
 
     stats_xlsx = outputs_dir / "2025年度ESI高水平论文统计结果.xlsx"
+    detailed_xlsx = outputs_dir / "2025年度ESI高水平论文去重总表.xlsx"
     report_docx = outputs_dir / "我校2025年度ESI高水平论文的产出情况及影响力分析.docx"
     process_docx = outputs_dir / "2025年度ESI高水平论文统计口径与核验说明.docx"
     author_flow_docx = outputs_dir / "2025年度ESI高水平论文作者统计流程详解.docx"
@@ -75,11 +76,21 @@ def run_pipeline(settings: PipelineSettings, log: Callable[[str], None]) -> dict
     log("== 分析 6 期附表 ==")
     summary = run_analysis(input_dir, analysis_dir, template_docx)
     log(f"年度总量：高水平论文 {summary['totals']['high_level']} 篇，高被引 {summary['totals']['high_cited']} 篇，热点 {summary['totals']['hot']} 篇")
+    warnings = summary.get("compatibility_warnings", [])
+    if warnings:
+        log("兼容性提示：")
+        for warning in warnings:
+            log(f"- {warning}")
     log("")
 
     log("== 生成统计工作簿 ==")
     generate_stats_workbook(analysis_dir, stats_xlsx)
     log(str(stats_xlsx))
+    log("")
+
+    log("== 生成详细去重总表 ==")
+    generate_detailed_workbook(analysis_dir, detailed_xlsx)
+    log(str(detailed_xlsx))
     log("")
 
     log("== 生成正式报告 ==")
@@ -101,6 +112,7 @@ def run_pipeline(settings: PipelineSettings, log: Callable[[str], None]) -> dict
         "analysis_dir": analysis_dir,
         "outputs_dir": outputs_dir,
         "stats_xlsx": stats_xlsx,
+        "detailed_xlsx": detailed_xlsx,
         "report_docx": report_docx,
         "process_docx": process_docx,
         "author_flow_docx": author_flow_docx,

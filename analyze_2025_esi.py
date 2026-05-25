@@ -56,6 +56,29 @@ SUBJECT_ORDER = [
     "一般社会科学",
 ]
 
+HEADER_ALIASES = {
+    "序号": "序号",
+    "题名": "题名",
+    "论文题名": "题名",
+    "作者": "作者",
+    "出版物": "出版物",
+    "刊物": "出版物",
+    "期刊": "出版物",
+    "被引次数": "被引次数",
+    "引用次数": "被引次数",
+    "出版时间": "出版时间",
+    "发表时间": "出版时间",
+    "第一/通讯作者": "第一/通讯作者",
+    "第一作者/通讯作者": "第一/通讯作者",
+    "第一作者或通讯作者": "第一/通讯作者",
+    "所属学院": "所属学院",
+    "所属学院（部门）": "所属学院",
+    "所属学院(部门)": "所属学院",
+    "学院": "所属学院",
+    "所属ESI学科": "所属ESI学科",
+    "ESI学科": "所属ESI学科",
+}
+
 COLLEGE_ALIASES = {
     "计算机与人工智能学院（原信息工程学院）": "计算机与人工智能学院",
     "计算机与人工智能学院(原信息工程学院)": "计算机与人工智能学院",
@@ -157,6 +180,12 @@ def clean_text(value: object) -> str:
     return text
 
 
+def normalize_header_name(text: str) -> str:
+    cleaned = strip_tags(clean_text(text))
+    cleaned = re.sub(r"\s+", "", cleaned)
+    return HEADER_ALIASES.get(cleaned, cleaned)
+
+
 def strip_tags(text: str) -> str:
     text = html.unescape(text)
     return re.sub(r"<[^>]+>", "", text)
@@ -180,15 +209,64 @@ def find_first_match(base_dir: Path, patterns: list[str]) -> Path:
     raise FileNotFoundError(f"未在 {base_dir} 中找到匹配文件：{patterns}")
 
 
+def normalize_name_key(text: str) -> str:
+    text = strip_tags(clean_text(text))
+    text = text.replace("－", "-").replace("—", "-").replace("–", "-").replace("—", "-")
+    text = text.replace("第", "").replace("期", "").replace("附表", "")
+    text = re.sub(r"\s+", "", text)
+    return text.upper()
+
+
+def fallback_issue_match(base_dir: Path, tokens: list[str]) -> Path:
+    normalized_tokens = [normalize_name_key(token) for token in tokens]
+    candidates = []
+    for path in sorted(base_dir.glob("*.xlsx")):
+        if path.name.startswith("~$"):
+            continue
+        name_key = normalize_name_key(path.stem)
+        if all(token in name_key for token in normalized_tokens):
+            candidates.append(path)
+    if candidates:
+        return candidates[0]
+    raise FileNotFoundError(f"未在 {base_dir} 中找到包含标记 {tokens} 的附表文件")
+
+
+def resolve_issue_file(base_dir: Path, patterns: list[str], fallback_tokens: list[str]) -> Path:
+    try:
+        return find_first_match(base_dir, patterns)
+    except FileNotFoundError:
+        return fallback_issue_match(base_dir, fallback_tokens)
+
+
 def build_sources(base_dir: Path) -> list[tuple[int, Path, str]]:
-    issue_45 = find_first_match(base_dir, ["ESI*第4-5期附表*.xlsx", "ESI*第4-５期附表*.xlsx"])
+    issue_45 = resolve_issue_file(
+        base_dir,
+        ["ESI*第4-5期附表*.xlsx", "ESI*第4-５期附表*.xlsx"],
+        ["4-5"],
+    )
     return [
-        (1, find_first_match(base_dir, ["ESI*第1期附表*.xlsx"]), "附表1.本期我校高被引论文和热点论文"),
-        (2, find_first_match(base_dir, ["ESI*第2期附表*.xlsx"]), "附表1.本期我校高被引论文和热点论文"),
-        (3, find_first_match(base_dir, ["ESI*第3期附表*.xlsx"]), "附表3.本期我校高被引论文和热点论文"),
+        (
+            1,
+            resolve_issue_file(base_dir, ["ESI*第1期附表*.xlsx"], ["1"]),
+            "附表1.本期我校高被引论文和热点论文",
+        ),
+        (
+            2,
+            resolve_issue_file(base_dir, ["ESI*第2期附表*.xlsx"], ["2"]),
+            "附表1.本期我校高被引论文和热点论文",
+        ),
+        (
+            3,
+            resolve_issue_file(base_dir, ["ESI*第3期附表*.xlsx"], ["3"]),
+            "附表3.本期我校高被引论文和热点论文",
+        ),
         (4, issue_45, "附表1.2025年7月高被引论文和热点论文"),
         (5, issue_45, "附表2.2025年9月高被引论文和热点论文"),
-        (6, find_first_match(base_dir, ["ESI*第6期附表*.xlsx"]), "附表1.本期我校高被引论文和热点论文"),
+        (
+            6,
+            resolve_issue_file(base_dir, ["ESI*第6期附表*.xlsx"], ["6"]),
+            "附表1.本期我校高被引论文和热点论文",
+        ),
     ]
 
 
@@ -247,21 +325,36 @@ def extract_chinese_names(text: str) -> list[str]:
     return names
 
 
-def build_author_seed(template_path: Path) -> dict[str, str]:
-    doc = Document(template_path)
-    rows = [[cell.text.strip() for cell in row.cells] for row in doc.tables[2].rows[1:]]
+def _extract_seed_from_rows(rows: list[list[str]]) -> dict[str, str]:
     mapping: dict[str, str] = {}
-    current = ["", "", ""]
+    slots = max((len(row) for row in rows), default=0) // 2
+    current = [""] * max(slots, 1)
     for row in rows:
-        for idx in range(3):
-            name = row[idx * 2].replace("\n", "").strip()
+        for idx in range(slots):
+            cell_idx = idx * 2
+            if cell_idx >= len(row):
+                continue
+            name = row[cell_idx].replace("\n", "").strip()
             if not name:
                 continue
             if name in COLLEGE_ALIASES.values():
                 current[idx] = name
-            else:
+            elif current[idx]:
                 mapping[name] = current[idx]
     return mapping
+
+
+def build_author_seed(template_path: Path) -> dict[str, str]:
+    doc = Document(template_path)
+    best_mapping: dict[str, str] = {}
+    for table in doc.tables:
+        rows = [[cell.text.strip() for cell in row.cells] for row in table.rows[1:]]
+        mapping = _extract_seed_from_rows(rows)
+        if len(mapping) > len(best_mapping):
+            best_mapping = mapping
+    if not best_mapping:
+        raise ValueError("未能从模板中识别作者-学院种子映射，请检查模板表格结构。")
+    return best_mapping
 
 
 AUTHOR_SEED: dict[str, str] = {}
@@ -432,24 +525,62 @@ def resolve_record_authors(record: PaperRecord, alias_map: dict[str, str]) -> tu
     return dedupe_preserve(chinese_names), dedupe_preserve(unresolved)
 
 
-def read_sheet(issue: int, path: Path, sheet_name: str) -> list[PaperRecord]:
-    df = pd.read_excel(path, sheet_name=sheet_name, header=None).fillna("")
+def resolve_sheet_name(path: Path, preferred_sheet: str) -> tuple[str, str | None]:
+    excel = pd.ExcelFile(path)
+    if preferred_sheet in excel.sheet_names:
+        return preferred_sheet, None
+
+    preferred_key = normalize_name_key(preferred_sheet)
+    for name in excel.sheet_names:
+        if normalize_name_key(name) == preferred_key:
+            return name, f"工作表名与预期不完全一致，已自动匹配为：{name}"
+
+    best_name = ""
+    best_score = -1
+    for name in excel.sheet_names:
+        preview = pd.read_excel(path, sheet_name=name, header=None, nrows=40).fillna("")
+        score = 0
+        flattened = " ".join(clean_text(value) for row in preview.values.tolist() for value in row)
+        if "高被引" in flattened:
+            score += 3
+        if "热点" in flattened:
+            score += 3
+        if "题名" in flattened and "作者" in flattened:
+            score += 4
+        if score > best_score:
+            best_score = score
+            best_name = name
+    if best_name:
+        return best_name, f"未找到预设工作表名，已按内容识别使用：{best_name}"
+    raise ValueError(f"{path.name} 中未找到可识别的高被引/热点论文工作表")
+
+
+def _is_header_row(values: list[str]) -> bool:
+    normalized = [normalize_header_name(value) for value in values if clean_text(value)]
+    return "序号" in normalized and "题名" in normalized and "作者" in normalized
+
+
+def read_sheet(issue: int, path: Path, sheet_name: str) -> tuple[list[PaperRecord], dict[str, object]]:
+    resolved_sheet, warning = resolve_sheet_name(path, sheet_name)
+    df = pd.read_excel(path, sheet_name=resolved_sheet, header=None).fillna("")
     records: list[PaperRecord] = []
     section = ""
     headers: list[str] = []
+    section_warnings: list[str] = []
     for _, row in df.iterrows():
         values = [clean_text(v) for v in row.tolist()]
         first = values[0]
-        if "高被引论文清单" in first:
+        merged = " ".join(value for value in values if value)
+        if "高被引" in merged and "论文" in merged:
             section = "高被引论文"
             headers = []
             continue
-        if "热点论文清单" in first:
+        if "热点" in merged and "论文" in merged:
             section = "热点论文"
             headers = []
             continue
-        if first == "序号":
-            headers = values
+        if _is_header_row(values):
+            headers = [normalize_header_name(value) for value in values]
             continue
         if not section or not headers:
             continue
@@ -474,7 +605,18 @@ def read_sheet(issue: int, path: Path, sheet_name: str) -> list[PaperRecord]:
             author_entities=extract_author_entities(authors_raw),
         )
         records.append(record)
-    return records
+    if not records:
+        section_warnings.append("未识别到任何有效论文记录，请检查工作表结构或表头。")
+    info = {
+        "issue": issue,
+        "file": str(path),
+        "preferred_sheet": sheet_name,
+        "resolved_sheet": resolved_sheet,
+        "warning": warning,
+        "record_count": len(records),
+        "section_warnings": section_warnings,
+    }
+    return records, info
 
 
 def infer_author_mapping(aggregates: Iterable[PaperAggregate]) -> dict[str, str]:
@@ -521,8 +663,16 @@ def run_analysis(base_dir: Path, out_dir: Path, template_2024: Path) -> dict[str
     OUT.mkdir(parents=True, exist_ok=True)
 
     records: list[PaperRecord] = []
+    source_resolution: list[dict[str, object]] = []
+    compatibility_warnings: list[str] = []
     for issue, path, sheet_name in SOURCES:
-        records.extend(read_sheet(issue, path, sheet_name))
+        issue_records, info = read_sheet(issue, path, sheet_name)
+        records.extend(issue_records)
+        source_resolution.append(info)
+        if info.get("warning"):
+            compatibility_warnings.append(f"第{issue}期：{info['warning']}")
+        for item in info.get("section_warnings", []):
+            compatibility_warnings.append(f"第{issue}期：{item}")
 
     author_alias_map = build_author_alias_map(records)
     for record in records:
@@ -667,6 +817,8 @@ def run_analysis(base_dir: Path, out_dir: Path, template_2024: Path) -> dict[str
         "unresolved_author_papers": unresolved_author_papers,
         "pinyin_pending_papers": pinyin_pending_papers,
         "author_alias_map": author_alias_map,
+        "source_resolution": source_resolution,
+        "compatibility_warnings": compatibility_warnings,
     }
 
     papers = []
@@ -679,6 +831,26 @@ def run_analysis(base_dir: Path, out_dir: Path, template_2024: Path) -> dict[str
                 "colleges": sorted(agg.colleges),
                 "subjects": sorted(agg.subjects),
                 "authors": agg.chinese_names,
+                "pending_authors": [
+                    extract_display_pinyin(token)
+                    for token in agg.unresolved_author_tokens
+                    if extract_display_pinyin(token)
+                ],
+                "raw_author_tokens": agg.unresolved_author_tokens,
+                "records": [
+                    {
+                        "issue": record.issue,
+                        "category": record.category,
+                        "publication": record.publication,
+                        "citations": record.citations,
+                        "year": record.year,
+                        "first_corr": record.first_corr,
+                        "authors_raw": record.authors_raw,
+                        "colleges": record.colleges,
+                        "subjects": record.subjects,
+                    }
+                    for record in agg.records
+                ],
             }
         )
 

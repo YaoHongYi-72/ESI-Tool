@@ -29,7 +29,7 @@ class EsiToolApp:
         wrapper.pack(fill=tk.BOTH, expand=True)
 
         intro = (
-            "用途：把 6 期 ESI 附表自动整理成统计工作簿、正式报告、统计口径说明和作者流程文档。\n"
+            "用途：把 6 期 ESI 附表自动整理成统计工作簿、详细去重总表、正式报告、统计口径说明和作者流程文档。\n"
             "当前版本按 2025 年统计口径输出，适合老师在 Windows 电脑上点选后直接生成。"
         )
         ttk.Label(wrapper, text=intro, justify=tk.LEFT).pack(anchor=tk.W, pady=(0, 12))
@@ -126,6 +126,7 @@ class EsiToolApp:
                 return
             self.append_log("生成完成。")
             self.append_log(f"统计工作簿：{result['stats_xlsx']}")
+            self.append_log(f"详细去重总表：{result['detailed_xlsx']}")
             self.append_log(f"正式报告：{result['report_docx']}")
             self.append_log(f"统计口径说明：{result['process_docx']}")
             self.append_log(f"作者统计流程文档：{result['author_flow_docx']}")

@@ -8,6 +8,11 @@ AutoCloseWindow true
 XPStyle on
 SetCompressor /SOLID lzma
 
+Page directory
+Page instfiles
+UninstPage uninstConfirm
+UninstPage instfiles
+
 Section "Install"
   SetShellVarContext current
   SetOutPath "$INSTDIR"
