@@ -73,13 +73,14 @@ $sedLines = @(
     "AdminQuietInstCmd=%AdminQuietInstCmd%"
     "UserQuietInstCmd=%UserQuietInstCmd%"
     "SourceFiles=SourceFiles"
+    "Strings=Strings"
     "[Strings]"
     "InstallPrompt="
     "DisplayLicense="
     "FinishMessage="
     "TargetName=$targetAscii"
-    "FriendlyName=ESI Tool Installer"
-    "AppLaunched=cmd.exe /c install.cmd"
+    'FriendlyName="ESI Tool Installer"'
+    'AppLaunched=cmd.exe /d /s /c ""install.cmd""'
     "PostInstallCmd=<None>"
     "AdminQuietInstCmd="
     "UserQuietInstCmd="
@@ -104,8 +105,14 @@ if (Test-Path $targetFinal) {
 }
 
 & $iexpressPath /N /Q $sedPath
+$iexpressExit = $LASTEXITCODE
+Write-Host "IExpress exit code: $iexpressExit"
 
 if (!(Test-Path $targetAscii)) {
+    Write-Host "Generated SED file:"
+    Get-Content -Path $sedPath | ForEach-Object { Write-Host $_ }
+    Write-Host "Release directory contents:"
+    Get-ChildItem -Force -Path $releaseResolved | ForEach-Object { Write-Host $_.FullName }
     throw "IExpress did not produce installer: $targetAscii"
 }
 
