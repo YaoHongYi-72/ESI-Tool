@@ -7,9 +7,9 @@ ShowInstDetails show
 AutoCloseWindow true
 XPStyle on
 SetCompressor /SOLID lzma
-SetShellVarContext current
 
 Section "Install"
+  SetShellVarContext current
   SetOutPath "$INSTDIR"
   File /oname=ESI-Tool.exe "dist\ESI统计工具.exe"
   File "README.md"
@@ -27,6 +27,7 @@ Section "Install"
 SectionEnd
 
 Section "Uninstall"
+  SetShellVarContext current
   Delete "$DESKTOP\ESI统计工具.lnk"
   Delete "$SMPROGRAMS\ESI统计工具.lnk"
   Delete "$INSTDIR\README.md"
