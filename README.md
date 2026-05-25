@@ -1,6 +1,6 @@
 # ESI-Tool
 
-`ESI-Tool` 是一套面向非计算机专业人员的 Windows 桌面统计工具，用来把 `6` 期 ESI 附表自动整理成年度统计工作簿和配套报告。
+`ESI-Tool` 是一套面向非计算机专业人员的 Windows 桌面统计工具，用来把 `6` 期 ESI 附表自动整理成年度统计工作簿和配套报告，并支持生成可分发的 Windows 安装包。
 
 当前版本聚焦 `2025` 年统计口径，能够自动生成：
 
@@ -25,6 +25,8 @@ windows_tool/
   esi_gui_app.py
   esi_pipeline.py
   build_windows_exe.bat
+  build_windows_installer.bat
+  esi_installer.iss
   run_esi_tool.bat
   esi_tool.spec
   requirements-windows.txt
@@ -37,9 +39,12 @@ windows_tool/
 ### 方法一：下载 GitHub Actions 自动打包结果
 
 1. 打开仓库的 `Actions`
-2. 进入最近一次 `Build Windows EXE`
-3. 下载构建产物 `ESI统计工具-windows`
-4. 解压后运行目录中的 `ESI统计工具.exe`
+2. 进入最近一次 `Build Windows Installer Package`
+3. 下载构建产物：
+   - `ESI统计工具-installer`
+   - `ESI统计工具-portable`
+4. 安装版直接运行 `ESI统计工具-Setup.exe`
+5. 便携版解压后运行 `ESI统计工具.exe`
 
 ### 方法二：在 Windows 本机从源码启动
 
@@ -52,7 +57,23 @@ windows_tool/
    - `输出工作目录`
 5. 点击 `开始生成`
 
-## 在 Windows 上本地打包 exe
+## 在 Windows 上本地打包
+
+### 打包安装版
+
+先安装 `Inno Setup 6`，然后双击：
+
+```text
+windows_tool/build_windows_installer.bat
+```
+
+打包完成后，安装包位于：
+
+```text
+release/ESI统计工具-Setup.exe
+```
+
+### 仅打包单文件 exe
 
 直接双击：
 
@@ -70,14 +91,15 @@ dist/ESI统计工具/
 
 仓库内置了 GitHub Actions 工作流：
 
-- 推送到 `main` 或 `master` 时自动构建 Windows exe
+- 推送到 `main` 或 `master` 时自动构建 Windows 安装包和便携版
 - 手动触发 `workflow_dispatch` 时也会构建
-- 如果推送的是 `v*` 标签，会额外把压缩包上传到 GitHub Release
+- 如果推送的是 `v*` 标签，会额外把安装包和便携版上传到 GitHub Release
 
 构建产物为：
 
 ```text
-ESI统计工具-windows.zip
+ESI统计工具-Setup.exe
+ESI统计工具-portable.zip
 ```
 
 ## 输入要求
