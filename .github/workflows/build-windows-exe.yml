@@ -39,7 +39,7 @@ jobs:
             --clean `
             --onefile `
             --windowed `
-            --name "ESI统计工具" `
+            --name "ESI-Tool" `
             --paths . `
             --hidden-import windows_tool.esi_pipeline `
             --hidden-import analyze_2025_esi `
@@ -49,8 +49,8 @@ jobs:
             --hidden-import generate_esi_stats_workbook `
             windows_tool/esi_gui_app.py
 
-          if (!(Test-Path "dist/ESI统计工具.exe")) {
-            throw "PyInstaller did not produce dist/ESI统计工具.exe"
+          if (!(Test-Path "dist/ESI-Tool.exe")) {
+            throw "PyInstaller did not produce dist/ESI-Tool.exe"
           }
 
       - name: Set package version
@@ -69,7 +69,7 @@ jobs:
           New-Item -ItemType Directory -Force -Path release | Out-Null
           $portableDir = "release/ESI-Tool-portable"
           New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
-          Copy-Item -Force "dist/ESI统计工具.exe" $portableDir
+          Copy-Item -Force "dist/ESI-Tool.exe" $portableDir
           Copy-Item -Force README.md "$portableDir/README.md"
           Compress-Archive -Path "$portableDir/*" -DestinationPath "release/ESI-Tool-portable.zip" -Force
 

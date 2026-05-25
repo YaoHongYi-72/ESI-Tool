@@ -45,7 +45,7 @@ windows_tool/
    - `ESI统计工具-installer`
    - `ESI统计工具-portable`
 4. 安装版直接运行 `ESI-Tool-Setup.exe`
-5. 便携版解压后运行 `ESI统计工具.exe`
+5. 便携版解压后运行 `ESI-Tool.exe`
 
 ### 方法二：在 Windows 本机从源码启动
 
@@ -87,7 +87,7 @@ windows_tool/build_windows_exe.bat
 打包完成后，程序目录位于：
 
 ```text
-dist/ESI统计工具.exe
+dist/ESI-Tool.exe
 ```
 
 ## GitHub 自动打包

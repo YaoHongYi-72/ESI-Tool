@@ -11,7 +11,7 @@ SetCompressor /SOLID lzma
 Section "Install"
   SetShellVarContext current
   SetOutPath "$INSTDIR"
-  File /oname=ESI-Tool.exe "..\dist\ESI统计工具.exe"
+  File "..\dist\ESI-Tool.exe"
   File "..\README.md"
   WriteUninstaller "$INSTDIR\Uninstall.exe"
 

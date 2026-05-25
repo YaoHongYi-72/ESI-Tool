@@ -30,7 +30,7 @@ exe = EXE(
     a.zipfiles,
     a.datas,
     [],
-    name="ESI统计工具",
+    name="ESI-Tool",
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,

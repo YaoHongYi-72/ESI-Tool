@@ -11,7 +11,7 @@ call .venv\Scripts\activate.bat
 python -m pip install --upgrade pip
 python -m pip install -r windows_tool\requirements-windows.txt
 
-pyinstaller --noconfirm --clean --onefile --windowed --name "ESI统计工具" --paths . ^
+pyinstaller --noconfirm --clean --onefile --windowed --name "ESI-Tool" --paths . ^
   --hidden-import windows_tool.esi_pipeline ^
   --hidden-import analyze_2025_esi ^
   --hidden-import generate_2025_esi_doc ^
