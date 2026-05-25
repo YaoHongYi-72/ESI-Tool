@@ -19,5 +19,6 @@ pyinstaller --noconfirm --clean --onefile --windowed --name "ESI统计工具" --
   --hidden-import generate_author_flow_doc ^
   --hidden-import generate_esi_stats_workbook ^
   windows_tool\esi_gui_app.py
+if errorlevel 1 exit /b %errorlevel%
 
 endlocal

@@ -26,8 +26,8 @@ windows_tool/
   esi_pipeline.py
   build_windows_exe.bat
   build_windows_installer.bat
+  build_iexpress_installer.ps1
   install.cmd
-  sfx_config.txt
   run_esi_tool.bat
   esi_tool.spec
   requirements-windows.txt
@@ -44,7 +44,7 @@ windows_tool/
 3. 下载构建产物：
    - `ESI统计工具-installer`
    - `ESI统计工具-portable`
-4. 安装版直接运行 `ESI统计工具-Setup.exe`
+4. 安装版直接运行 `ESI-Tool-Setup.exe`
 5. 便携版解压后运行 `ESI统计工具.exe`
 
 ### 方法二：在 Windows 本机从源码启动
@@ -62,7 +62,7 @@ windows_tool/
 
 ### 打包安装版
 
-先安装 `7-Zip`，然后双击：
+直接双击：
 
 ```text
 windows_tool/build_windows_installer.bat
@@ -71,7 +71,7 @@ windows_tool/build_windows_installer.bat
 打包完成后，安装包位于：
 
 ```text
-release/ESI统计工具-Setup.exe
+release/ESI-Tool-Setup.exe
 ```
 
 ### 仅打包单文件 exe
@@ -85,7 +85,7 @@ windows_tool/build_windows_exe.bat
 打包完成后，程序目录位于：
 
 ```text
-dist/ESI统计工具/
+dist/ESI统计工具.exe
 ```
 
 ## GitHub 自动打包
@@ -99,8 +99,8 @@ dist/ESI统计工具/
 构建产物为：
 
 ```text
-ESI统计工具-Setup.exe
-ESI统计工具-portable.zip
+ESI-Tool-Setup.exe
+ESI-Tool-portable.zip
 ```
 
 ## 输入要求

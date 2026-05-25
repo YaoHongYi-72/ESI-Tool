@@ -67,73 +67,33 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path release | Out-Null
-          $portableDir = "release/ESI统计工具-portable"
+          $portableDir = "release/ESI-Tool-portable"
           New-Item -ItemType Directory -Force -Path $portableDir | Out-Null
           Copy-Item -Force "dist/ESI统计工具.exe" $portableDir
           Copy-Item -Force README.md "$portableDir/README.md"
-          Compress-Archive -Path "$portableDir/*" -DestinationPath "release/ESI统计工具-portable.zip" -Force
-
-      - name: Install 7-Zip
-        shell: pwsh
-        run: choco install 7zip --no-progress -y
+          Compress-Archive -Path "$portableDir/*" -DestinationPath "release/ESI-Tool-portable.zip" -Force
 
       - name: Build installer package
         shell: pwsh
         run: |
-          $sevenZipDir = Join-Path $env:ProgramFiles '7-Zip'
-          if (!(Test-Path $sevenZipDir)) {
-            $sevenZipDir = Join-Path ${env:ProgramFiles(x86)} '7-Zip'
-          }
-          $sevenZipExe = Join-Path $sevenZipDir '7z.exe'
-          $sfxModule = Join-Path $sevenZipDir '7zS.sfx'
-          if (!(Test-Path $sevenZipExe)) {
-            throw "7z.exe not found"
-          }
-          if (!(Test-Path $sfxModule)) {
-            throw "7zS.sfx not found"
-          }
-
-          $payloadDir = "release/installer_payload"
-          New-Item -ItemType Directory -Force -Path $payloadDir | Out-Null
-          Copy-Item -Force "dist/ESI统计工具.exe" "$payloadDir/ESI统计工具.exe"
-          Copy-Item -Force "README.md" "$payloadDir/README.md"
-          Copy-Item -Force "windows_tool/install.cmd" "$payloadDir/install.cmd"
-
-          & $sevenZipExe a -t7z "release/installer_payload.7z" "$payloadDir\*" | Out-Null
-
-          $sfxConfig = Get-Content "windows_tool/sfx_config.txt" -Raw -Encoding utf8
-          [System.IO.File]::WriteAllText("release/sfx_config.txt", $sfxConfig, [System.Text.UTF8Encoding]::new($true))
-
-          $sfxBytes = [System.IO.File]::ReadAllBytes($sfxModule)
-          $configBytes = [System.IO.File]::ReadAllBytes("release/sfx_config.txt")
-          $archiveBytes = [System.IO.File]::ReadAllBytes("release/installer_payload.7z")
-          $outPath = "release/ESI统计工具-Setup.exe"
-
-          $stream = [System.IO.File]::Create($outPath)
-          try {
-            $stream.Write($sfxBytes, 0, $sfxBytes.Length)
-            $stream.Write($configBytes, 0, $configBytes.Length)
-            $stream.Write($archiveBytes, 0, $archiveBytes.Length)
-          } finally {
-            $stream.Dispose()
-          }
+          ./windows_tool/build_iexpress_installer.ps1 -ExePath "dist/ESI统计工具.exe"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: ESI统计工具-installer
-          path: release/ESI统计工具-Setup.exe
+          path: release/ESI-Tool-Setup.exe
 
       - name: Upload portable artifact
         uses: actions/upload-artifact@v4
         with:
           name: ESI统计工具-portable
-          path: release/ESI统计工具-portable.zip
+          path: release/ESI-Tool-portable.zip
 
       - name: Upload release asset
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            release/ESI统计工具-Setup.exe
-            release/ESI统计工具-portable.zip
+            release/ESI-Tool-Setup.exe
+            release/ESI-Tool-portable.zip
