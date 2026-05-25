@@ -28,6 +28,8 @@ if not exist "%ISCC%" (
   exit /b 1
 )
 
-"%ISCC%" windows_tool\esi_installer.iss
+pushd windows_tool
+"%ISCC%" esi_installer.iss
+popd
 
 endlocal

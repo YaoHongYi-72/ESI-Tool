@@ -84,7 +84,12 @@ jobs:
           if (!(Test-Path $iscc)) {
             $iscc = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
           }
-          & $iscc "windows_tool\esi_installer.iss"
+          Push-Location windows_tool
+          try {
+            & $iscc "esi_installer.iss"
+          } finally {
+            Pop-Location
+          }
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
