@@ -73,10 +73,25 @@ jobs:
           Copy-Item -Force README.md "$portableDir/README.md"
           Compress-Archive -Path "$portableDir/*" -DestinationPath "release/ESI-Tool-portable.zip" -Force
 
+      - name: Install NSIS
+        shell: pwsh
+        run: choco install nsis --no-progress -y
+
       - name: Build installer package
         shell: pwsh
         run: |
-          ./windows_tool/build_iexpress_installer.ps1 -ExePath "dist/ESI统计工具.exe"
+          $nsisDir = Join-Path ${env:ProgramFiles(x86)} "NSIS"
+          if (!(Test-Path $nsisDir)) {
+            $nsisDir = Join-Path $env:ProgramFiles "NSIS"
+          }
+          $makensis = Join-Path $nsisDir "makensis.exe"
+          if (!(Test-Path $makensis)) {
+            throw "makensis.exe not found"
+          }
+          & $makensis /V4 "windows_tool/esi_installer.nsi"
+          if (!(Test-Path "release/ESI-Tool-Setup.exe")) {
+            throw "NSIS did not produce release/ESI-Tool-Setup.exe"
+          }
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4

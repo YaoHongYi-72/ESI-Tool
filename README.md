@@ -26,7 +26,7 @@ windows_tool/
   esi_pipeline.py
   build_windows_exe.bat
   build_windows_installer.bat
-  build_iexpress_installer.ps1
+  esi_installer.nsi
   install.cmd
   run_esi_tool.bat
   esi_tool.spec
@@ -67,6 +67,8 @@ windows_tool/
 ```text
 windows_tool/build_windows_installer.bat
 ```
+
+前提：已安装 `NSIS`
 
 打包完成后，安装包位于：
 
